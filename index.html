@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <title>Login BTTR</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="container">
+        <form action="">
+            <h1>Login BTTR</h1>
+            <div class="input-box">
+                <input type="email" placeholder="Usuário" required>
+                <i class="bx bxs-user"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" placeholder="Senha" id="password" required>
+                <i class="bx bxs-show toggle-password" id="togglePassword"></i>
+            </div>
+            <div class="remember-forgot">
+                <label><input type="checkbox"> Lembrar minha senha</label>
+                <a href="recuperar-senha.html">Esqueci minha senha</a>
+            </div>
+            <button type="submit">Login</button>
+            <div class="register-link">
+                <p>Não tem uma conta? <a href="cadastro.html">Cadastre-se</a></p>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.classList.remove('bxs-show');
+                togglePassword.classList.add('bxs-hide');
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.classList.remove('bxs-hide');
+                togglePassword.classList.add('bxs-show');
+            }
+        });
+    </script>
+</body>
+</html>"
