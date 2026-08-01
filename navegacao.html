@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+  <title>Nexus - Rede</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <img src="../nexus/img/logo.png" alt="Logo Nexus" />
+        <div>
+          <strong>Nexus</strong><br />
+          <span>Rede social para devs</span>
+        </div>
+      </div>
+
+      <label class="search">
+        <i class="bx bx-search"></i>
+        <input type="text" placeholder="Pesquisar usuários, tópicos ou notícias" />
+      </label>
+    </header>
+
+    <main class="feed-grid">
+      <aside class="card sidebar">
+        <h3>Canais</h3>
+        <div class="chip-list">
+          <button class="chip active"><i class="bx bxs-hot"></i> Tech Trends</button>
+          <button class="chip"><i class="bx bxs-brain"></i> IA</button>
+          <button class="chip"><i class="bx bx-code-alt"></i> Frontend</button>
+          <button class="chip"><i class="bx bxs-server"></i> Backend</button>
+          <button class="chip"><i class="bx bxs-cog"></i> DevOps</button>
+        </div>
+      </aside>
+
+      <section class="feed">
+        <div class="card composer">
+          <h3>Publicar algo</h3>
+          <textarea id="postContent" placeholder="Escreva algo inspirador, compartilhe um link, uma imagem ou um vídeo..."></textarea>
+
+          <div class="inline-input active" id="linkInputWrap">
+            <input type="url" id="linkInput" placeholder="Cole um link aqui" />
+          </div>
+
+          <div class="inline-input" id="mediaInputWrap">
+            <input type="file" id="mediaInput" accept="image/*,video/*" />
+          </div>
+
+          <div class="toolbar">
+            <button class="icon-btn active" type="button" data-type="text" title="Texto"><i class="bx bx-text"></i></button>
+            <button class="icon-btn" type="button" data-type="image" title="Foto"><i class="bx bx-image"></i></button>
+            <button class="icon-btn" type="button" data-type="video" title="Vídeo"><i class="bx bx-video"></i></button>
+            <button class="icon-btn" type="button" data-type="link" title="Link"><i class="bx bx-link-alt"></i></button>
+            <button class="icon-btn" id="publishBtn" type="button" title="Publicar"><i class="bx bx-send"></i></button>
+          </div>
+        </div>
+
+        <div class="post-list" id="postList"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const postContent = document.getElementById('postContent');
+    const publishBtn = document.getElementById('publishBtn');
+    const postList = document.getElementById('postList');
+    const typeButtons = document.querySelectorAll('.icon-btn[data-type]');
+    const linkInputWrap = document.getElementById('linkInputWrap');
+    const mediaInputWrap = document.getElementById('mediaInputWrap');
+    const linkInput = document.getElementById('linkInput');
+    const mediaInput = document.getElementById('mediaInput');
+    let selectedType = 'text';
+
+    function renderPosts() {
+      const posts = JSON.parse(localStorage.getItem('nexusPosts') || '[]');
+      postList.innerHTML = '';
+
+      if (!posts.length) {
+        postList.innerHTML = `
+          <div class="empty-state">
+            <h4>Ainda não há publicações</h4>
+            <p>Seja o primeiro a compartilhar algo com a comunidade Nexus.</p>
+          </div>
+        `;
+        return;
+      }
+
+      posts.forEach((post) => {
+        const card = document.createElement('article');
+        card.className = 'post-card';
+
+        if (post.type === 'image' && post.mediaUrl) {
+          card.innerHTML = `<h4>📸 Foto compartilhada</h4><p>${post.text}</p><img src="${post.mediaUrl}" alt="Post de imagem" />`;
+        } else if (post.type === 'video' && post.mediaUrl) {
+          card.innerHTML = `<h4>🎥 Vídeo compartilhado</h4><p>${post.text}</p><video controls src="${post.mediaUrl}"></video>`;
+        } else if (post.type === 'link' && post.link) {
+          card.innerHTML = `<h4>🔗 Link compartilhado</h4><p>${post.text}</p><a href="${post.link}" target="_blank">Abrir link</a>`;
+        } else {
+          card.innerHTML = `<h4>📝 Post publicado</h4><p>${post.text}</p>`;
+        }
+
+        postList.appendChild(card);
+      });
+    }
+
+    typeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectedType = btn.dataset.type;
+        typeButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        linkInputWrap.classList.toggle('active', selectedType === 'link');
+        mediaInputWrap.classList.toggle('active', selectedType === 'image' || selectedType === 'video');
+      });
+    });
+
+    publishBtn.addEventListener('click', async () => {
+      const text = postContent.value.trim();
+      const link = linkInput.value.trim();
+
+      if (!text && selectedType !== 'image' && selectedType !== 'video') {
+        alert('Escreva algo antes de publicar.');
+        return;
+      }
+
+      let mediaUrl = '';
+      if ((selectedType === 'image' || selectedType === 'video') && mediaInput.files[0]) {
+        const file = mediaInput.files[0];
+        mediaUrl = await readFileAsDataUrl(file);
+      }
+
+      const post = {
+        type: selectedType,
+        text: text || 'Nova publicação',
+        link: selectedType === 'link' ? link : '',
+        mediaUrl
+      };
+
+      const posts = JSON.parse(localStorage.getItem('nexusPosts') || '[]');
+      posts.unshift(post);
+      localStorage.setItem('nexusPosts', JSON.stringify(posts));
+      renderPosts();
+      postContent.value = '';
+      linkInput.value = '';
+      mediaInput.value = '';
+    });
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    renderPosts();
+  </script>
+</body>
+</html>
